@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenVR Ambient Light LED daemon (Steam Frame)
+After=steamvr.service
+PartOf=steamvr.service
+
+[Service]
+ExecStart=%h/.local/bin/oal-frame-daemon
+Restart=on-failure
+RestartSec=3
+Nice=5
+
+[Install]
+WantedBy=steamvr.service

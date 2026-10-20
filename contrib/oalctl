@@ -1,0 +1,184 @@
+#!/bin/sh
+# oalctl: enable/disable/inspect the OAL capture layer and LED daemon on a Steam Frame.
+# Everything lives in your home directory; nothing here touches /opt/steamvr or the OS.
+set -u
+
+data_dir="$HOME/.local/share/oal-frame"
+config_dir="$HOME/.config/oal-frame"
+manifest="$data_dir/layer/oal_capture_layer.json"
+disabled="$manifest.disabled"
+killswitch="$config_dir/layer-disabled"
+pending="$config_dir/probation-pending"
+probation_unit="oal-probation"
+probation_seconds="${OAL_PROBATION_SECONDS:-180}"
+guard_failures="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/oal-frame/failed-starts"
+layer_log="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/oal-frame/layer.log"
+daemon="$HOME/.local/bin/oal-frame-daemon"
+
+say() { printf '%s\n' "$*"; }
+
+restart_steamvr() {
+    say "Restarting SteamVR..."
+    systemctl --user restart steamvr.service
+}
+
+stop_probation() {
+    rm -f "$pending"
+    systemctl --user stop "$probation_unit.timer" >/dev/null 2>&1 || true
+    systemctl --user reset-failed "$probation_unit.service" "$probation_unit.timer" >/dev/null 2>&1 || true
+}
+
+layer_state() {
+    if [ -f "$manifest" ] && [ ! -e "$killswitch" ]; then echo enabled
+    elif [ -f "$manifest" ]; then echo "enabled but kill switch present ($killswitch)"
+    elif [ -f "$disabled" ]; then echo disabled
+    else echo "not installed"; fi
+}
+
+case "${1:-}" in
+    enable)
+        [ -f "$data_dir/lib/liboal_capture_layer.so" ] || { say "Layer is not installed. Run install.sh first."; exit 1; }
+        if [ "$(uname -m)" != aarch64 ]; then say "This is meant for the Steam Frame (aarch64)."; exit 1; fi
+        if [ -f "$disabled" ]; then mv "$disabled" "$manifest"; fi
+        rm -f "$killswitch" "$guard_failures"
+        stop_probation
+        if [ "${2:-}" != "--no-probation" ]; then
+            # Safety net: unless you run `oalctl confirm`, the layer turns itself off again.
+            # The marker file also covers a reboot during probation (see oal-guard).
+            mkdir -p "$config_dir" && touch "$pending"
+            if ! systemd-run --user --quiet --unit="$probation_unit" --on-active="${probation_seconds}s" \
+                "$HOME/.local/bin/oalctl" revert-probation; then
+                rm -f "$pending"
+                mv "$manifest" "$disabled"
+                say "Could not start the probation timer, so the layer was NOT enabled."
+                say "(Use 'oalctl enable --no-probation' only if you have SSH access to recover.)"
+                exit 1
+            fi
+        fi
+        systemctl --user enable oal-frame-daemon.service >/dev/null 2>&1 || true
+        restart_steamvr
+        systemctl --user start oal-frame-daemon.service || true
+        if [ "${2:-}" != "--no-probation" ]; then
+            say ""
+            say "Capture layer ENABLED on probation."
+            say "If the headset looks normal, run:   oalctl confirm"
+            say "If you do nothing, it switches itself off again in $probation_seconds seconds and restarts SteamVR."
+        else
+            say "Capture layer ENABLED (no probation timer)."
+        fi
+        ;;
+    confirm)
+        if systemctl --user is-active --quiet "$probation_unit.timer"; then
+            stop_probation
+            say "Confirmed. The capture layer stays enabled. (Undo any time with: oalctl disable)"
+        else
+            say "No probation timer is running. Layer state: $(layer_state)"
+        fi
+        ;;
+    revert-probation)
+        # Called by the probation timer. Only acts if the layer is still enabled.
+        rm -f "$pending"
+        if [ -f "$manifest" ]; then
+            mv "$manifest" "$disabled"
+            mkdir -p "$config_dir"
+            date '+%F %T: probation expired without "oalctl confirm"; layer disabled automatically' >> "$config_dir/events.log"
+            systemctl --user restart steamvr.service
+        fi
+        ;;
+    disable)
+        stop_probation
+        if [ -f "$manifest" ]; then mv "$manifest" "$disabled"; fi
+        rm -f "$guard_failures"
+        systemctl --user disable --now oal-frame-daemon.service >/dev/null 2>&1 || true
+        restart_steamvr
+        say "Capture layer and LED daemon DISABLED. Settings are kept."
+        ;;
+    status)
+        say "Capture layer:     $(layer_state)"
+        if systemctl --user is-active --quiet "$probation_unit.timer"; then
+            say "Probation:         ACTIVE (run 'oalctl confirm' to keep the layer)"
+        fi
+        say "LED daemon:        $(systemctl --user is-active oal-frame-daemon.service 2>/dev/null || true) (autostart: $(systemctl --user is-enabled oal-frame-daemon.service 2>/dev/null || true))"
+        say "SteamVR service:   $(systemctl --user is-active steamvr.service 2>/dev/null || true)"
+        say "Guard failures:    $(cat "$guard_failures" 2>/dev/null || echo 0)"
+        [ -f "$config_dir/events.log" ] && { say "Recent safety events:"; tail -n 3 "$config_dir/events.log" | sed 's/^/  /'; }
+        say ""
+        say "Layer log ($layer_log):"
+        tail -n 8 "$layer_log" 2>/dev/null | sed 's/^/  /' || say "  (none yet)"
+        say ""
+        [ -x "$daemon" ] && "$daemon" --status
+        ;;
+    log)
+        tail -n 50 "$layer_log" 2>/dev/null
+        say "--- daemon (journal) ---"
+        journalctl --user -u oal-frame-daemon.service -n 30 --no-pager 2>/dev/null
+        ;;
+    reset-edge)
+        # Forget the locked lens edge; the daemon learns it again and locks it once done.
+        systemctl --user stop oal-frame-daemon.service >/dev/null 2>&1 || true
+        rm -f "${XDG_STATE_HOME:-$HOME/.local/state}"/oal-frame/lensmask-*.bin
+        systemctl --user start oal-frame-daemon.service >/dev/null 2>&1 || true
+        say "Lens edge cleared and learning again."
+        say "Put the headset on and look around a bright game or SteamVR Home (not the room view) for about"
+        say "20 seconds. The edge then locks and stays put until you run oalctl reset-edge again."
+        say "Check with: oalctl snapshot   (or: journalctl --user -u oal-frame-daemon | grep 'lens edge')"
+        ;;
+    calibrate)
+        # Fixed test colours on the LEDs for white balance / colour checks. The LED daemon is
+        # paused meanwhile so the two don't fight over the LEDs.
+        was_active=false
+        systemctl --user is-active --quiet oal-frame-daemon.service && was_active=true
+        systemctl --user stop oal-frame-daemon.service >/dev/null 2>&1 || true
+        "$daemon" --calibrate
+        $was_active && systemctl --user start oal-frame-daemon.service >/dev/null 2>&1
+        true
+        ;;
+    snapshot)
+        out="${2:-$HOME/oal-snapshot.ppm}"
+        "$daemon" --snapshot "$out"
+        ;;
+    doctor)
+        ok=true
+        [ "$(uname -m)" = aarch64 ] || { say "FAIL: not aarch64"; ok=false; }
+        [ -f "$data_dir/lib/liboal_capture_layer.so" ] || { say "FAIL: layer library missing"; ok=false; }
+        [ -f "$manifest" ] || [ -f "$disabled" ] || { say "FAIL: layer manifest missing"; ok=false; }
+        [ -f "$HOME/.config/systemd/user/steamvr.service.d/91-oal-capture.conf" ] || { say "FAIL: SteamVR drop-in missing"; ok=false; }
+        [ -x "$daemon" ] || { say "FAIL: daemon missing"; ok=false; }
+        "$daemon" --selftest >/dev/null 2>&1 || { say "FAIL: daemon selftest"; ok=false; }
+        ini_get() { sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" "$config_dir/oal.ini" 2>/dev/null | tail -n 1 | tr -d '\r'; }
+        output=$(ini_get Output | tr 'A-Z' 'a-z')
+        if [ "$output" = udp ]; then
+            host=$(ini_get UdpHost); host=${host:-oal-led.local}
+            udp_port=$(ini_get UdpPort); udp_port=${udp_port:-21324}
+            if ip=$(getent ahostsv4 "$host" 2>/dev/null | awk 'NR==1{print $1}') && [ -n "$ip" ]; then
+                say "ok: LED controller $host resolves to $ip (UDP port $udp_port)"
+                if command -v ping >/dev/null 2>&1; then
+                    if ping -c 3 -W 1 "$ip" >/dev/null 2>&1; then say "ok: $ip answers ping"
+                    else say "WARN: $ip does not answer ping (board off, not on Wi-Fi yet, or on another network)"; fi
+                fi
+            else
+                say "WARN: cannot resolve '$host'. Is the board powered and on the same Wi-Fi?"
+                say "      If .local names don't work here, set UdpHost to the board's IP address in oal.ini."
+            fi
+        else
+            port=$(ini_get '\(SerialPort\|ComPort\)')
+            port=${port:-/dev/ttyACM0}
+            if [ -e "$port" ]; then
+                grp=$(stat -c %G "$port")
+                if [ -r "$port" ] && [ -w "$port" ]; then say "ok: serial port $port is accessible"
+                else say "WARN: $port belongs to group '$grp' and you are not in it. Fix: sudo usermod -aG $grp $(id -un), then reboot"; fi
+            else
+                say "info: serial port $port not present (fine until the LED controller is plugged in)"
+                ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null | sed 's/^/      found: /'
+                if ! modinfo cdc_acm >/dev/null 2>&1 && ! [ -d /sys/bus/usb/drivers/cdc_acm ]; then
+                    say "      note: this kernel has no USB-serial (cdc_acm) driver; use Output = udp instead"
+                fi
+            fi
+        fi
+        if [ "$ok" = true ]; then say "OAL preflight: OK"; else exit 1; fi
+        ;;
+    *)
+        say "usage: oalctl enable [--no-probation] | confirm | disable | status | log | snapshot [file.ppm] | calibrate | reset-edge | doctor"
+        exit 2
+        ;;
+esac

@@ -1,0 +1,48 @@
+#!/bin/sh
+# Startup guard, adapted from FrameColor's framecolor-guard
+# (Copyright (c) 2026 beko-kerbecotton, MIT License, https://github.com/beko-kerbecotton/framecolor).
+# Runs around steamvr.service. If SteamVR fails within 10 seconds of starting
+# while our layer is enabled, the layer is disabled so the next start is clean.
+# This script must never fail: it is wired in with a "-" prefix and exits 0.
+
+data_dir="$HOME/.local/share/oal-frame"
+manifest="$data_dir/layer/oal_capture_layer.json"
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/oal-frame"
+started="$runtime_dir/steamvr-started"
+failures="$runtime_dir/failed-starts"
+
+case "${1:-}" in
+    start)
+        # Rebooted (or SteamVR restarted) while on probation with no timer left?
+        # Then nobody confirmed the layer works: switch it off before SteamVR loads it.
+        pending="$HOME/.config/oal-frame/probation-pending"
+        if [ -f "$pending" ] && [ -f "$manifest" ] && ! systemctl --user is-active --quiet oal-probation.timer 2>/dev/null; then
+            mv "$manifest" "$manifest.disabled" 2>/dev/null
+            rm -f "$pending"
+            date "+%F %T: probation was never confirmed (reboot?); OAL capture layer disabled by guard" \
+                >> "$HOME/.config/oal-frame/events.log" 2>/dev/null
+        fi
+        if [ -f "$manifest" ]; then
+            mkdir -p "$runtime_dir" 2>/dev/null
+            date +%s > "$started" 2>/dev/null
+        else
+            rm -f "$started" "$failures"
+        fi
+        ;;
+    stop)
+        [ -f "$manifest" ] || { rm -f "$started" "$failures"; exit 0; }
+        [ -r "$started" ] || exit 0
+        read -r start_time < "$started" 2>/dev/null || exit 0
+        case "$start_time" in *[!0-9]*|'') exit 0 ;; esac
+        elapsed=$(( $(date +%s) - start_time ))
+        if [ "${SERVICE_RESULT:-}" != success ] && [ -n "${SERVICE_RESULT:-}" ] && [ "$elapsed" -lt 10 ]; then
+            mv "$manifest" "$manifest.disabled" 2>/dev/null
+            mkdir -p "$HOME/.config/oal-frame" 2>/dev/null
+            date "+%F %T: SteamVR failed ${elapsed}s after start (${SERVICE_RESULT}); OAL capture layer disabled by guard" \
+                >> "$HOME/.config/oal-frame/events.log" 2>/dev/null
+            echo 1 > "$failures" 2>/dev/null
+        fi
+        rm -f "$started"
+        ;;
+esac
+exit 0
