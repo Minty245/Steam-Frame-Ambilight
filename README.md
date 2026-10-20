@@ -1,246 +1,251 @@
-# OpenVR Ambient Light for Steam Frame (Linux / aarch64)
+<!--
+  README outline for the Steam Frame ambient light mod.
+  Sections marked TODO are for you to write. Bracketed notes like [facts] are things I already know
+  from the build and filled in or pointed to; check them against your final hardware.
+  Delete these comments as you go.
+-->
 
-This folder makes OpenVR Ambient Light (OAL) run natively on the Steam Frame, without Proton.
-It has two small parts:
+# Steam Frame Ambilight <!-- TODO: pick a name -->
 
+<!-- TODO: one-sentence pitch, e.g. "LEDs inside the Steam Frame that extend the edges of the picture into
+your peripheral vision, so the field of view feels wider." -->
+
+<!-- TODO: hero photo or short GIF: headset on a table with the LEDs lit, plus one through-the-lens shot
+if you can get it. GitHub plays .gif and .mp4 inline. -->
+
+> **Status:** <!-- TODO: e.g. "Working daily driver on my Steam Frame (SteamOS x.y, SteamVR x.y). Expect rough edges." -->
+> **Tested on:** Steam Frame, Arduino Nano ESP32, 24 × WS2812B 0807 LEDs. <!-- TODO: versions -->
+
+## Table of contents
+<!-- GitHub also auto-generates one (the ☰ icon on the README), but a short manual list helps on mobile. -->
+1. [What it does](#what-it-does)
+2. [How it works](#how-it-works)
+3. [Safety and disclaimers](#safety-and-disclaimers)
+4. [Bill of materials](#bill-of-materials)
+5. [3D-printed parts](#3d-printed-parts)
+6. [Hardware build](#hardware-build)
+7. [Firmware (ESP32)](#firmware-esp32)
+8. [Software (on the headset)](#software-on-the-headset)
+9. [Calibration and tuning](#calibration-and-tuning)
+10. [Troubleshooting](#troubleshooting)
+11. [Uninstalling / going back](#uninstalling--going-back)
+12. [Building from source](#building-from-source)
+13. [Repository layout](#repository-layout)
+14. [Credits and licenses](#credits-and-licenses)
+
+---
+
+## What it does
+<!-- TODO: 3–5 bullets in your own words. Ideas from the build: -->
+- Lights up the edges of your peripheral vision with colours taken from the very edge of what's on screen.
+- Runs entirely on the headset: no PC software, works standalone and with Steam Link streaming.
+- Follows the headset's display brightness automatically.
+- Smooth, flicker-free dim colours (16-bit colour with temporal dithering) and colour correction for the LEDs.
+- <!-- TODO: anything else you care about (latency feel, games you've tried, comfort) -->
+
+<!-- TODO (optional): "Why I built this" paragraph and a nod to VR_Ambilight as the inspiration. -->
+
+## How it works
+<!-- Short overview for the curious; link to linux/README.md for details. Suggested diagram: -->
 ```
-vrcompositor ──► OAL capture layer ──► /dev/shm/oal-capture ──► oal-frame-daemon ──► UDP / serial ──► ESP32 ──► LEDs
-(SteamVR)        (Vulkan layer, ~30 Hz,      (tiny grid of          (OAL's own geometry and
-                  2:1 GPU blits, no shaders)  colours per eye)       colour code, same settings)
+SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi (UDP) ──► ESP32 ──► LEDs
+(on the headset)       (Vulkan layer)     (colours,       (same network)  (dithering,
+                                           brightness)                      current limit)
 ```
+- **Capture layer:** a small Vulkan layer inside SteamVR's compositor copies a shrunk-down version of the
+  final panel image ~30 times a second. It never waits on the GPU, and it turns itself off if anything
+  fails.
+- **LED daemon:** a background service that works out each LED's colour from the lens edge. It uses
+  OpenVR Ambient Light's colour pipeline, follows the panel brightness, applies colour correction for the
+  LEDs, and sends the result over Wi-Fi.
+- **Firmware:** the ESP32 receives the colours. It refreshes the strip 1000 times a second, with one core
+  dedicated to the LEDs, and uses temporal dithering for smooth dim colours.
+- **Why Wi-Fi and not USB:** the Frame's kernel has no USB-serial driver (`cdc_acm`). The USB port only
+  powers the board.
 
-* **Capture layer** (`layer/`). A Vulkan layer that SteamVR's compositor loads, the same way FrameColor
-  loads. About 30 times a second it copies the image being shown on the panels, shrinks it to at most
-  128×128 on the GPU, and publishes it. It never waits on the GPU. If anything fails, it switches itself
-  off for that image and lets frames through untouched.
-* **LED daemon** (`daemon/`). Reads that grid and produces LED colours with OAL's sample-area geometry
-  (`UpdateSampleArea`) and colour pipeline (`CalculateOutputColor`, `mathutil.h` from the repo root).
-  It sends them to the LED controller over Wi-Fi (UDP) or Adalight serial. It uses the same setting names
-  as the Windows app.
-* **LED firmware** (`firmware/oal_led_udp/`). An ESP32 sketch that receives the colours over Wi-Fi.
+## Safety and disclaimers
+<!-- TODO: write in your own voice. Points worth covering: -->
+- Opening or modifying the headset may void your warranty; done at your own risk.
+- **Heat:** LEDs and the board sit close to your face. Mention the current limit (`MAX_MILLIAMPS`), your
+  diffuser and brightness choices, and how warm it gets in practice. <!-- TODO: your measurements -->
+- **Power:** the LEDs run on 5 V straight from the Frame's USB port, through the board's VBUS pin. The
+  firmware caps the strip's current (`MAX_MILLIAMPS`, 500 mA by default). <!-- TODO: your setting -->
+- **Brightness and flicker:** bright light close to the eyes; photosensitivity warning; how to turn it off
+  quickly (`oalctl disable`, or just unplug the board).
+- Not affiliated with Valve.
 
-FrameColor is **not** needed and is not modified. If it is installed, both layers run together.
+## Bill of materials
+<!-- Fill in links, prices, quantities. Keep one table; group by category. -->
+| Part | Qty | Notes | Link |
+| --- | --- | --- | --- |
+| Arduino Nano ESP32 (ESP32-S3) | 1 | Any ESP32-S3 should work; this guide uses the Nano's pin names | <!-- TODO --> |
+| WS2812B 0807 addressable LEDs | 24 | 12 per side. <!-- TODO: kit name --> | <!-- TODO: amazon.com/dp/B0DWX8BPGY --> |
+| Thin wire | <!-- TODO --> | <!-- TODO: gauge, colours --> | |
+| USB-C cable / adapter | 1 | Powers the board from the Frame's USB port <!-- TODO: what you used (right-angle? length?) --> | |
+| Light-reducing tape | <!-- TODO --> | Cuts brightness before diffusing | |
+| Fabric tape | <!-- TODO --> | Diffuser layer(s) | |
+| 3D-printed parts | see below | | |
+| <!-- TODO: glue/adhesive, heat-shrink, Kapton, screws, magnets... --> | | | |
 
-## Quick start
+**Tools:** <!-- TODO: soldering iron, flush cutters, 3D printer, multimeter (recommended)... -->
 
-From your PC (PowerShell has `scp`), copy the release archive to the Frame:
+## 3D-printed parts
+<!-- TODO: one row per part. Put STL/STEP/3MF files in a `hardware/` folder and link them. -->
+| Part | File | Material | Settings | Notes |
+| --- | --- | --- | --- | --- |
+| <!-- TODO: diffuser --> | `hardware/....stl` | <!-- e.g. PETG; translucent? --> | <!-- layer height, infill, supports --> | <!-- heat notes --> |
+| <!-- TODO: mounts/brackets --> | | | | |
 
-```sh
-scp linux/dist/oal-frame-aarch64.tar.gz steamos@FRAME_IP:
-```
+<!-- TODO: note any print-orientation tips, and whether parts are remixable (link the CAD source if you share it). -->
 
-On the Frame (Konsole or SSH):
+## Hardware build
+<!-- TODO: your words + photos at every step. Suggested structure: -->
+### 1. Plan the LED layout
+- 24 LEDs: 12 down each side of the lenses. <!-- TODO: exact placement, photo -->
+- Which end of each strip is the data input, and which LED is LED 0 (this decides the `BottomToTop*` /
+  `SwapLeftRight` settings later).
 
+### 2. Wiring
+<!-- TODO: wiring diagram image (Fritzing, KiCad, or a clear hand drawing). -->
+| From (Nano ESP32) | To (LED strip) | Notes |
+| --- | --- | --- |
+| D6 (GPIO9) | DIN of first LED | Data |
+| VBUS (5 V from USB) | 5V/VDD | Current capped by `MAX_MILLIAMPS` in the firmware |
+| GND | GND | |
+<!-- TODO: how the two sides are chained (left then right?), wire routing, strain relief. -->
+
+### 3. Mounting inside the headset
+<!-- TODO: step-by-step with photos: removing the facial interface (?), attaching mounts, gluing strips. -->
+
+### 4. Diffuser
+<!-- TODO: your tape stack / printed diffuser, and how each changes brightness/heat. -->
+
+### 5. Mounting the board
+<!-- TODO: where the Nano lives, cable routing to the Frame's USB port. -->
+
+## Firmware (ESP32)
+[facts — check and keep]
+1. Install the **Arduino IDE** and the **Arduino ESP32 boards** package (tested with core 2.0.18).
+2. Install **FastLED 3.9.20**. Newer FastLED versions leave the strip stuck white on this core.
+3. **Tools → Board:** Arduino Nano ESP32. **Tools → Pin Numbering:** "By GPIO number (legacy)".
+4. Open `firmware/oal_led_udp_dither/oal_led_udp_dither.ino`. Copy `wifi_secrets.example.h` to
+   `wifi_secrets.h` and enter your 2.4 GHz Wi-Fi details.
+5. Check the settings at the top of the sketch: `NUM_LEDS`, `DATA_PIN`, `MAX_MILLIAMPS`, `REFRESH_HZ`.
+6. Upload. The board LED blinks while joining Wi-Fi and goes dark once connected. With USB connected to a
+   PC, the Serial Monitor (115200) shows the IP address and the refresh rate.
+- The simpler 8-bit sketch `firmware/oal_led_udp/` is a fallback (use `UdpProtocol = adalight`).
+- <!-- TODO: tip: give the board a DHCP reservation on your router. -->
+
+## Software (on the headset)
+[facts — mostly from linux/README.md; trim or link as you like]
+### Requirements
+- Steam Frame with SteamOS and SteamVR. Desktop Mode / Konsole access, or SSH.
+- The LED board on the same Wi-Fi network.
+
+### Install
 ```sh
 tar -xzf oal-frame-aarch64.tar.gz
 cd oal-frame
 sh install.sh                    # installs DISABLED; SteamVR is not touched
-~/.local/bin/oalctl doctor       # preflight checks
-~/.local/bin/oalctl enable       # turns the layer on (on probation) and restarts SteamVR
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+oalctl doctor                    # preflight checks
+oalctl enable                    # turns the capture layer on (on probation) and restarts SteamVR
+oalctl confirm                   # once the headset looks normal; otherwise it reverts itself after 3 min
 ```
+<!-- TODO: link to the Releases page if you publish the tarball as a GitHub Release (recommended
+instead of committing dist/ to the repo). -->
 
-Put the headset on. **If everything looks normal**, run:
-
-```sh
-~/.local/bin/oalctl confirm
+### Configure
+Edit `~/.config/oal-frame/oal.ini` (changes apply when you save). The minimum:
+```ini
+Output = udp
+UdpHost = oal-led.local      ; or the board's IP
+UdpProtocol = oal16          ; needs the dithering firmware
+NumLights = 24
+EyeRotation = 180            ; the Frame's panel image is upside down per eye
 ```
+<!-- TODO: a short table of the settings people will actually touch: Brightness, Saturation, Smoothing,
+EdgeDepth/EdgeInset, SwapLeftRight/BottomToTop*, FollowPanelBrightness, LedWhite*, Dither. Link
+contrib/oal.ini for the rest. -->
 
-**If you don't run `confirm` within 3 minutes, the layer turns itself off and SteamVR restarts.** A
-broken display therefore fixes itself even if you can't reach a terminal.
-
-## Testing without LEDs
-
-```sh
-~/.local/bin/oalctl status       # what the layer captures: image size, format, which part is each eye
-~/.local/bin/oalctl snapshot     # writes ~/oal-snapshot.ppm (open it in Gwenview): shows exactly what each LED samples
-```
-
-The snapshot shows the left and right eye images the daemon uses. The boxes are the LED sample areas
-and the strip at the bottom shows the LED colours in strip order. Use it to tune the geometry in
-`~/.config/oal-frame/oal.ini`. The daemon reloads the file when you save it.
-
-To watch live LED colours in the terminal:
-
-```sh
-systemctl --user stop oal-frame-daemon
-~/.local/bin/oal-frame-daemon --dry-run      # Ctrl+C to stop
-systemctl --user start oal-frame-daemon
-```
-
-## Backout plan (from mildest to most thorough)
-
-| Situation | What happens / what to do |
+### Commands
+| Command | What it does |
 | --- | --- |
-| Display broken after `oalctl enable` | Do nothing. After 3 min the layer turns off and SteamVR restarts. |
-| You rebooted during those 3 minutes | The guard turns the layer off before SteamVR starts. |
-| SteamVR fails within 10 s of starting with the layer on | The guard turns the layer off (logged in `~/.config/oal-frame/events.log`). |
-| You want it off | `~/.local/bin/oalctl disable` (restarts SteamVR; settings kept) |
-| `oalctl` itself won't run | `touch ~/.config/oal-frame/layer-disabled && systemctl --user restart steamvr.service` (the layer loads but does nothing) |
-| You want OAL out of SteamVR entirely | `rm ~/.config/systemd/user/steamvr.service.d/91-oal-capture.conf && systemctl --user daemon-reload && systemctl --user restart steamvr.service` |
-| Remove everything | `sh uninstall.sh` (add `--purge` to also delete `oal.ini`) |
+| `oalctl status` | Capture state, view layout, live LED colours |
+| `oalctl snapshot` | Writes `~/oal-snapshot.ppm` showing what each LED samples |
+| `oalctl calibrate` | Test colours on the LEDs, for white balance (with `contrib/calibrate.html`) |
+| `oalctl reset-edge` | Forget the learned lens edge |
+| `oalctl log` | Layer log and daemon journal |
+| `oalctl doctor` | Preflight checks (network, files) |
+| `oalctl disable` / `enable` | Turn the capture layer off / on |
 
-Everything is installed in your home directory: `~/.local/share/oal-frame`, `~/.local/bin`,
-`~/.local/libexec/oal-guard`, `~/.config/oal-frame`, and two files in `~/.config/systemd/user`. Nothing
-under `/opt/steamvr` or the OS is changed.
+## Calibration and tuning
+<!-- TODO: your own walk-through. Suggested order: -->
+1. **LED order:** put something bright at the top of the view and on each side. Fix `SwapLeftRight` /
+   `BottomToTopLeft` / `BottomToTopRight` until the LEDs match.
+2. **Lens edge:** look around a bright game or SteamVR Home for a few seconds, then run `oalctl snapshot`.
+   You should see about 70–75% coverage and white frames hugging the lens edge. The room view
+   (passthrough) is ignored on purpose.
+3. **Edge position:** set `EdgeInset` / `EdgeDepth`. One cell is about 0.0075 of an eye's width. Insetting
+   by one cell avoids a reddish colour fringe right at the lens edge.
+4. **White balance:** run `oalctl calibrate` next to `contrib/calibrate.html` on a phone or monitor and
+   adjust `LedWhite*`.
+5. **Brightness / saturation / smoothing** to taste. <!-- TODO: your settings as a starting point -->
 
-## Connecting the LEDs
+## Troubleshooting
+<!-- Real problems from this build, worth keeping. Add your own. -->
+| Symptom | Fix |
+| --- | --- |
+| Strip stays solid white | Use FastLED 3.9.20, and set Pin Numbering to "By GPIO number (legacy)" |
+| Compile error about `CRGB` / `memset` / `pinMode` | Wrong FastLED version or pin-numbering setting (see Firmware) |
+| LEDs never react; no `/dev/ttyACM*` | Expected: the Frame has no USB-serial driver. Use Wi-Fi (`Output = udp`) |
+| `oal-led.local` doesn't resolve | Use the board's IP in `UdpHost`; set a DHCP reservation |
+| LEDs show the wrong side / upside down | `EyeRotation = 180`, then `SwapLeftRight` / `BottomToTop*` |
+| LEDs pick up stuff from further in | Check `oalctl snapshot`; lower `EdgeInset` / `EdgeDepth` |
+| LEDs dark, only light when moving your head | Edge learned too wide: update and/or `oalctl reset-edge`, relearn in a game (not the room view) |
+| Purple/red fringe on top and bottom LEDs | Lens colour-fringe correction at the very edge; `EdgeInset = 0.0075` |
+| Brief blackouts | Loose wiring, or an old daemon version (update) |
+| `oalctl: command not found` | Add `~/.local/bin` to PATH (see Install) |
+| SteamVR asks for first-time setup after restarts | <!-- TODO: in your case this was FrameColor, not this mod --> |
 
-### Over Wi-Fi (Steam Frame: recommended)
-
-The Frame's kernel has no USB-serial driver (`cdc_acm`), so a USB-connected controller can't receive
-data. Use an ESP32 board on Wi-Fi instead; the Frame's USB port can still power it.
-
-1. Open `firmware/oal_led_udp/oal_led_udp.ino` in the Arduino IDE. Copy `wifi_secrets.example.h` to
-   `wifi_secrets.h` in the same folder and enter your Wi-Fi name and password (2.4 GHz only).
-   `wifi_secrets.h` is git-ignored.
-2. Check `NUM_LEDS` and `DATA_PIN` at the top of the sketch. For the Arduino Nano ESP32 set
-   **Tools → Pin Numbering → "By GPIO number (legacy)"** (D6 = GPIO9) and use **FastLED 3.9.x**. Newer
-   FastLED versions don't drive LEDs on the Nano ESP32's 2.0.x core.
-3. Upload. The board LED blinks while it joins Wi-Fi and goes dark once connected, so it doesn't glow
-   inside the headset. Opening the Serial Monitor on your PC prints its IP address.
-4. In `~/.config/oal-frame/oal.ini` on the Frame set:
-   ```ini
-   Output = udp
-   UdpHost = oal-led.local      ; or the board's IP address
-   NumLights = 24               ; same as NUM_LEDS
-   ```
-5. Run `~/.local/bin/oalctl doctor`. It checks that the board's name resolves and that it answers ping.
-   If `.local` names don't resolve on the Frame, use the IP address. A DHCP reservation on your router
-   keeps it from changing.
-
-Latency is a few milliseconds on a normal home network. The firmware keeps the Wi-Fi radio awake
-(`WiFi.setSleep(false)`) because power saving would add 100 ms+ of jitter, and it shows only the newest
-packet. If packets stop for 2 seconds, the LEDs switch off. The firmware also accepts WLED's DRGB
-realtime packets (`UdpProtocol = drgb`), and a board running WLED works with that setting too.
-
-### Dithering and LED colour correction (optional firmware)
-
-`firmware/oal_led_udp_dither/` is the same receiver with two additions. Set
-`UdpProtocol = oal16` to use them:
-
-* **Temporal dithering.** The daemon sends 16-bit colours. The board refreshes the strip 1200 times a
-  second, and each LED channel cycles between two levels so the average lands between them. Dim colours
-  fade smoothly and keep their hue. For example, a dark grey of 3.7 / 2.5 / 3.5 steps no longer rounds to
-  a greenish 4 / 3 / 3.
-  * One core does nothing but refresh the LEDs, woken by a hardware timer, so the refresh rate never
-    follows the rate packets arrive at. The other core handles Wi-Fi.
-  * Each channel switches to a new colour only at the end of its own dither cycle, so every cycle
-    completes. An earlier version switched immediately, and the flicker then depended on `SampleRate`.
-  * By default each 8-bit step is split into 16 sub-steps that alternate neighbouring levels. The slowest
-    flicker is therefore 1200 / 16 = 75 Hz.
-  * Optionally, put one of JChalka's measured TemporalBFI tables in the sketch folder (see the comment
-    at the top of the sketch). It gives 55,000-62,000 measured steps per channel. Dim levels then show
-    as one brighter refresh per cycle: up to 20 refreshes (60 Hz) with the bfi19 table, or 10 (120 Hz)
-    with bfi9. To use its finest low levels, set `DitherCutoff` to 0.
-  * The LEDs get their data at 1 MHz instead of 800 kHz (`FASTLED_OVERCLOCK 1.25`), which leaves headroom
-    at 1200 Hz. If colours glitch, set it back to 1.0.
-  * The current limit (`MAX_MILLIAMPS`) is applied to the 16-bit colours before dithering. FastLED's
-    brightness, correction, dithering, power limiter and 400 Hz refresh cap are all off.
-  * With the board on USB, the Serial Monitor reports the refresh rate, late refreshes, and how long each
-    strip update takes, every 5 seconds.
-  * In `oal.ini`, `Dither = false` turns dithering off and `DitherCutoff` sets how dim counts as "off".
-* **LED colour correction** in the daemon. `LedGamut` converts screen colours to the LEDs' primaries,
-  using spectrophotometer readings of WS2812/SK6812-type emitters. The few screen colours the LEDs
-  can't reach get a dash of neutral light instead of a hue shift. `LedWhiteRed/Green/Blue` sets the
-  white balance; the defaults aim at a neutral (D65) white based on the measured emitter brightness.
-
-To tune the white balance, run `~/.local/bin/oalctl calibrate`. Open `contrib/calibrate.html` on a phone
-or monitor next to the LEDs and step through the same colours in both. Edit the `LedWhite*` values in
-`oal.ini` while it runs; each save applies immediately. Two whites can measure the same and still look
-different, so judge by eye. The last step is a slow fade near black for checking the dithering.
-
-Flash the new firmware before switching to `oal16`: the older firmware ignores those packets. The new
-firmware still accepts Adalight and DRGB (and dithers those too). To go back, upload `oal_led_udp` again
-and set `UdpProtocol = adalight`.
-
-### Over USB serial (other Linux machines)
-
-Set `Output = serial` and `SerialPort` (usually `/dev/ttyACM0` or `/dev/ttyUSB0`) and flash any Adalight
-sketch. If doctor reports that the port belongs to a group you aren't in, the usual fix is
-`sudo usermod -aG uucp $USER` and a reboot.
-
-## Frame-specific settings (`[Frame]` in oal.ini)
-
-* `SampleMode`: `edge` (default) makes each LED sample a thin strip just inside the visible lens edge
-  at its own height, and extends that colour outward. The edge's shape comes from the lens distortion, so
-  the daemon learns it from what's shown, saves it in `~/.local/state/oal-frame/`, and **locks** it.
-  `EdgeDepth` and `EdgeInset` set the strip's thickness and distance from the edge. `box` restores OAL's
-  original sample boxes.
-  * **Learning:** after install, or after `oalctl reset-edge`, look around a bright game or SteamVR Home
-    for about 20 seconds. Only captures that look like normal lens-shaped content count: at least 30%
-    and at most 75% of the image lit. Dark scenes, the room view (passthrough), fades and loading screens
-    are skipped. A cell must be lit in 4 separate captures to count as inside the lens.
-  * **Locked:** after about 20 seconds of good captures, the edge locks, the journal logs
-    `lens edge: learned ... and locked`, and nothing changes it until `oalctl reset-edge`. Taking the
-    headset off and the display waking into the room view can't widen it.
-  * Before the edge is learned for a row, that LED falls back to its box.
-  * A fully learned Frame lens covers about 70-75% of the image.
-  * In `oalctl snapshot`, white frames mark the cells each LED samples. Grey dots mark cells counted as
-    inside the lens that are dark in that frame; a band of them around the lens means it was learned too
-    wide (`oalctl reset-edge`).
-
-* `MinBrightness` (in `[Main]`, default 0 = off): a brightness floor. Edges that are dark but not black
-  keep a faint glow in their own colour instead of fading out. `BlackLevel` sets what counts as black,
-  which stays off.
-
-* `ViewMode`: how the eyes are found in the presented image (`auto`, `split`, `layers`, `swapchains`).
-  `oalctl status` shows what `auto` picked.
-* `InputEncoding`: `auto` is normally right. Use `srgb` or `linear` if the LED colours look too dark or
-  washed out compared with the headset.
-* `Smoothing`: 0 (off) to 0.95. Reduces flicker at the cost of lag.
-* `OAL_CAPTURE_HZ` in `~/.config/oal-frame/vulkan.env`: capture rate, default 30. Restart SteamVR after
-  changing it.
-* `OAL_CAPTURE_GRID` in the same file: capture detail. The panel image is halved until it fits in this
-  many cells. The installer sets 270, which gives the Frame a 270×135 grid; one cell is about 0.75% of
-  an eye's width, so edge sampling can stay close to the very edge. 128 gives the original 67×33 grid.
-  The maximum is 320. Restart SteamVR after changing it. The learned lens edge is kept per grid size.
-
-The layer writes a short log to `$XDG_RUNTIME_DIR/oal-frame/layer.log` (`oalctl log`). That is where
-the compositor's image size, format and layer count appear.
+## Uninstalling / going back
+[facts]
+- `oalctl disable` turns the capture layer off; your settings are kept.
+- `sh uninstall.sh` removes everything (`--purge` also removes settings and the learned edge).
+- If anything goes wrong after enabling, the layer turns itself off after 3 minutes without
+  `oalctl confirm`. It also does that if SteamVR fails to start.
+- Firmware: re-upload `oal_led_udp` for the plain 8-bit version.
+- Nothing under `/opt/steamvr` or the OS is modified; everything lives in your home directory.
 
 ## Building from source
+[facts] See `linux/README.md` → "Building from source": zig cross-compile (`sh linux/build.sh`) and the
+Vulkan headers. It targets glibc 2.28+, with the C++ runtime built in.
+<!-- TODO: mention the host test harness if you want contributors. -->
 
-The prebuilt archive is in `dist/`. To rebuild it, use any OS with [zig](https://ziglang.org) (or
-`pip install ziglang`) and the Vulkan headers:
-
-```sh
-VULKAN_INCLUDE=/path/to/Vulkan-Headers/include sh linux/build.sh
+## Repository layout
+<!-- Adjust to your final structure. -->
+```
+linux/
+  layer/        Vulkan capture layer (runs inside SteamVR's compositor)
+  daemon/       LED daemon (colours, brightness, colour correction, UDP output)
+  common/       Shared-memory format between the two
+  contrib/      install/uninstall, oalctl, systemd units, oal.ini, calibrate.html
+  firmware/     ESP32 sketches (dithering and plain 8-bit)
+  third_party/  OpenVR header (BSD-3)
+  test/         Host test harness
+hardware/       <!-- TODO: STL/3MF/STEP files, wiring diagram -->
+docs/           <!-- TODO: photos used in this README -->
 ```
 
-The output targets glibc 2.28 or newer with the C++ runtime built in, so it doesn't depend on the
-Frame's library versions.
-
-## What has and hasn't been tested
-
-Tested on an x86 Linux machine with Mesa's software Vulkan driver (lavapipe) and the Khronos validation
-layer, with synchronization validation on, running *below* the capture layer:
-
-* no validation errors over hundreds of presented frames
-* correct colours end to end (red, blue and mid-grey patterns through layer → daemon → Adalight bytes)
-* pass-through outside `vrcompositor`, the kill switch, `DISABLE_OAL_CAPTURE`, and LEDs turning off
-  when frames stop
-* the arm64 daemon (under qemu) reading data written by the layer
-* install, enable, probation, guard, disable and uninstall flows with stand-in system commands
-
-**Not yet tested on a real Steam Frame.** Unknowns that only the headset can answer:
-
-* how the compositor presents the two eyes (one side-by-side image, array layers, or two images)
-* whether its presentation surface allows the copy (if not, the log says `capture OFF` and nothing else changes)
-* the exact colour encoding of the panel image
-
-The image the layer sees is the final one sent to the panels, after lens distortion. The default OAL
-geometry may need adjusting, which is what `oalctl snapshot` is for.
-
-## Credits
-
-* Capture mechanism (a Vulkan layer in `vrcompositor`, enabled through a SteamVR user-service drop-in)
-  and the startup-guard idea come from [FrameColor](https://github.com/beko-kerbecotton/framecolor)
-  (MIT). No FrameColor code is required to build or run this.
-* `third_party/openvr/openvr.h` is from Valve's [OpenVR SDK](https://github.com/ValveSoftware/openvr)
-  (BSD-3-Clause, see `third_party/openvr/LICENSE`). It is used only to read the panel brightness.
-* The dithering design (bounded cycles, a dedicated render core on a hardware timer, nothing altering
-  values after dithering) and the emitter measurements behind the colour correction come from JChalka
-  and her TemporalBFI / [Blended-Frame-Insertion](https://github.com/JChalka/Blended-Frame-Insertion) work.
-  No TemporalBFI code is used.
-* LED geometry, colour pipeline, Adalight packet and settings come from OpenVR Ambient Light (MIT,
-  this repository).
+## Credits and licenses
+[facts — keep all of these]
+- **OpenVR Ambient Light** by Rectus (MIT): LED geometry, colour pipeline, Adalight protocol and settings.
+- **FrameColor** by beko-kerbecotton (MIT): the idea of a Vulkan layer in SteamVR's compositor, enabled
+  through a SteamVR service drop-in, and the startup guard. No FrameColor code is required.
+- **JChalka** ([Blended-Frame-Insertion / TemporalBFI](https://github.com/JChalka/Blended-Frame-Insertion)):
+  the dithering design and the LED measurements behind the colour correction.
+- **Statonwest/VR_Ambilight**: inspiration for the hardware concept. <!-- TODO: confirm you want this -->
+- **OpenVR SDK** header by Valve (BSD-3-Clause), in `third_party/openvr/`.
+- **FastLED** (MIT), used by the firmware.
+- <!-- TODO: your license for your own code and the hardware files (e.g. MIT for code, CC BY-SA 4.0 for
+  3D models). The original OAL code is MIT, so keep its copyright notice in LICENSE. -->
