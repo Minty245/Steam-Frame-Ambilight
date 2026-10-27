@@ -3,14 +3,14 @@
 LEDs inside the Steam Frame that extend the edges of the picture into
 your peripheral vision, so the field of view feels wider.
 
-<!-- TODO: hero photo or short GIF: headset on a table with the LEDs lit, plus one through-the-lens shot
-if you can get it. GitHub plays .gif and .mp4 inline. -->
+<img width="4096" height="2304" alt="IMG_20261024_135113668" src="https://github.com/user-attachments/assets/57db1938-742a-46af-a307-8acc679b6103" />
 
-> **Status:** Just Works:tm: on my Steam Frame. No daily tinkering required once you get the config how you like it.
+**Status:** Just Works:tm: on my Steam Frame. No daily tinkering required once you get the config how you like it.
 
-> **Tested on:** Steam Frame, Arduino Nano ESP32, 24 × WS2812B 0807 LEDs.
+**Tested on:** Steam Frame, Arduino Nano ESP32, 24 × WS2812B 0807 LEDs.
 
-> **AI Disclaimer:** AI was used to develop this software, converted from the human-made OpenVR Ambient Light software to C++ and on the Vulkan runtime. I've done my best to review the code, but I don't have much experience with C++. Please open an issue immediately if you notice any vulnerabilities and I'll do my best to fix them ASAP.
+**AI Disclaimer:** AI was used to develop this software, converted from the human-made OpenVR Ambient Light software to C++ and on the Vulkan runtime. I've done my best to review the code, but I don't have much experience with C++. Please open an issue immediately if you notice any vulnerabilities and I'll do my best to fix them ASAP.
+
 Pull requests are also welcome.
 
 Hardware setup and the diffuser are completely developed by human hands.
@@ -117,7 +117,6 @@ I recommend about __ cm of wire between the arduino and the first LED strip, and
 But I do recommend putting some heat shrink where the wire from the arduino and the first led strip connect for some strain relief. That has broken off before for me due to the many adjustments I was doing. And those LEDs don't matter quite as much as the others anyways.
 
 ### 3. Mounting inside the headset
-<!-- TODO: step-by-step with photos: removing the facial interface (?), attaching mounts, gluing strips. -->
 Remove the adhesive strip for the LEDs and mount them roughly level with the lens. The lower half should tape right on, but you'll want to use the top LED adhesive part to mount to the top. It's a bit janky, but I haven't thought of a better solution currently.
 The wire can be threaded under the face gasket as well, and be hidden almost completely. I don't feel the extra pressure from the wire myself either. It's completely hidden!
 <img width="4096" height="2304" alt="IMG_20261024_135438375" src="https://github.com/user-attachments/assets/bf596287-4800-4304-88e4-6a4203e18f93" />
@@ -127,7 +126,6 @@ While you're in here, cut a small bit of the hook part of the velcro and attach 
 
 
 ### 4. Diffuser
-<!-- TODO: your tape stack / printed diffuser, and how each changes brightness/heat. -->
 Preparing the diffuser is a bit tricky. You'll want to put the full width of the tape and cover as much of the bottom half as possible. I've found laying the diffuser on my leg and placing the tape on top helps a lot.<img width="2304" height="4096" alt="IMG_20261024_135147109" src="https://github.com/user-attachments/assets/c2de2b86-ab6a-4900-8477-4994c7bdba32" />
 
 <img width="2304" height="4096" alt="IMG_20261024_135156830" src="https://github.com/user-attachments/assets/d53f4d93-6765-4c2f-8868-66ee6fb797f5" />
@@ -176,8 +174,6 @@ oalctl doctor                    # preflight checks
 oalctl enable                    # turns the capture layer on (on probation) and restarts SteamVR
 oalctl confirm                   # once the headset looks normal; otherwise it reverts itself after 3 min
 ```
-<!-- TODO: link to the Releases page if you publish the tarball as a GitHub Release (recommended
-instead of committing dist/ to the repo). -->
 
 ### Configure
 
@@ -266,5 +262,3 @@ docs/           <!-- TODO: photos used in this README -->
 - **Statonwest/VR_Ambilight**: inspiration for the hardware concept. <!-- TODO: confirm you want this -->
 - **OpenVR SDK** header by Valve (BSD-3-Clause), in `third_party/openvr/`.
 - **FastLED** (MIT), used by the firmware.
-- <!-- TODO: your license for your own code and the hardware files (e.g. MIT for code, CC BY-SA 4.0 for
-  3D models). The original OAL code is MIT, so keep its copyright notice in LICENSE. -->
