@@ -67,10 +67,9 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
   powers the board.
 
 ## Safety and disclaimers
-- **Heat:** LEDs and the board sit close to your face. Mention the current limit (`MAX_MILLIAMPS`), your
-  diffuser and brightness choices, and how warm it gets in practice. <!-- TODO: your measurements -->
+- **Heat:** The LEDs are very close to your face and need to run bright enough to get through the diffuser stack. After a while you can feel the heat a tad, but in my experience it doesn't make you sweat or anything.
 - **Power:** the LEDs run on 5 V straight from the Frame's USB port, through the board's VBUS pin. The
-  firmware caps the strip's current (`MAX_MILLIAMPS`, 500 mA by default). <!-- TODO: your setting -->
+  firmware caps the strip's current (`MAX_MILLIAMPS`, 500 mA by default).
 - **Brightness and flicker:** bright light close to the eyes; photosensitivity warning; how to turn it off
   quickly (`oalctl disable`, or just unplug the board).
 - Not affiliated with Valve.
@@ -89,13 +88,13 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
 | Thick Transparent Double-sided Tape | | Any brand works. As long as it's like Alien Tape. | https://www.amazon.com/dp/B09H2RXXD9/ |
 | USB-C hub | | To allow you to charge the frame while still having the arduino plugged in| https://www.amazon.com/dp/B0DC51W9YC |
 
-**Tools:** <!-- TODO: soldering iron, flush cutters, 3D printer, multimeter (recommended)... -->
-Pinecil soldering iron
-Flush cutters
-3D Printer, I used a P1S
-Scissors to cut the tape
-Wire stripper
-X-Acto Knife
+**Tools:**
+- Pinecil soldering iron
+- Flush cutters
+- 3D Printer, I used a P1S
+- Scissors to cut the tape
+- Wire stripper
+- X-Acto Knife
 
 ## 3D-printed parts
 | Part | File | Material | Notes |
@@ -105,15 +104,15 @@ X-Acto Knife
 
 ## Hardware build
 ### 1. Plan the LED layout
-- 24 LEDs: 12 down each side of the lenses. <!-- TODO: exact placement, photo -->
+- 24 LEDs: 12 down each side of the lenses.
 
 ### 2. Wiring
-<!-- TODO: wiring diagram image (Fritzing, KiCad, or a clear hand drawing). -->
 | From (Nano ESP32) | To (LED strip) | Notes |
 | --- | --- | --- |
 | D6 (GPIO9) | DIN of first LED | Data |
 | VBUS (5 V from USB) | 5V/VDD | Current capped by `MAX_MILLIAMPS` in the firmware |
 | GND | GND | |
+
 I recommend about __ cm of wire between the arduino and the first LED strip, and then __ of wire between the first led strip and the second. Put heat shrink where you think it fits, but don't cover too much of the actual LED strip. These wires are tiny, so there's no risk of electric shock or anything. And they won't move much once actually mounted.
 But I do recommend putting some heat shrink where the wire from the arduino and the first led strip connect for some strain relief. That has broken off before for me due to the many adjustments I was doing. And those LEDs don't matter quite as much as the others anyways.
 
@@ -121,24 +120,37 @@ But I do recommend putting some heat shrink where the wire from the arduino and 
 <!-- TODO: step-by-step with photos: removing the facial interface (?), attaching mounts, gluing strips. -->
 Remove the adhesive strip for the LEDs and mount them roughly level with the lens. The lower half should tape right on, but you'll want to use the top LED adhesive part to mount to the top. It's a bit janky, but I haven't thought of a better solution currently.
 The wire can be threaded under the face gasket as well, and be hidden almost completely. I don't feel the extra pressure from the wire myself either. It's completely hidden!
+<img width="4096" height="2304" alt="IMG_20261024_135438375" src="https://github.com/user-attachments/assets/bf596287-4800-4304-88e4-6a4203e18f93" />
+
 While you're in here, cut a small bit of the hook part of the velcro and attach it to the top of the speaker housing area. Give it a bit of a triangle shape so you have some adjustment to work with on the diffuser.
+<img width="4096" height="2304" alt="IMG_20261024_135750661" src="https://github.com/user-attachments/assets/eb37defb-da77-4230-9665-bfb57d370b14" />
+
 
 ### 4. Diffuser
 <!-- TODO: your tape stack / printed diffuser, and how each changes brightness/heat. -->
-Preparing the diffuser is a bit tricky. You'll want to put the full width of the tape and cover as much of the bottom half as possible. I've found laying the diffuser on my leg and placing the tape on top helps a lot.
+Preparing the diffuser is a bit tricky. You'll want to put the full width of the tape and cover as much of the bottom half as possible. I've found laying the diffuser on my leg and placing the tape on top helps a lot.<img width="2304" height="4096" alt="IMG_20261024_135147109" src="https://github.com/user-attachments/assets/c2de2b86-ab6a-4900-8477-4994c7bdba32" />
+
+<img width="2304" height="4096" alt="IMG_20261024_135156830" src="https://github.com/user-attachments/assets/d53f4d93-6765-4c2f-8868-66ee6fb797f5" />
+
 First tape you should put on is the dimming tape, then the velcro. Use a precision cutter like an X-Acto Knife to trim the edges.
 Then, put a tiny strip of the felt part of the velcro on the external fin. This is how we'll actually mount it to the headset.
 Place the diffusers onto that little speaker housing area, and make sure the LEDs are covered. You'll likely have to adjust them a bit more in the future as the light can shine out from underneaht them a tad.
 
 ### 5. Mounting the board
 Ideally print a housing for the Arduino, and make sure the wire is held down in some way as well. You can just slap some Alien tape on the back and put it on the side of the headset onto the face gasket section. This will let you still take out the core module without fussing with the whole setup if needed.
+<img width="2304" height="4096" alt="IMG_20261024_135306968" src="https://github.com/user-attachments/assets/a6d86df0-20e1-47c6-b354-002426da1fac" />
+
 
 ### 6. Making it tidy
 If you put on the heat shrink where it should be and your wires are sized right, you should just be able to tuck the wires under the face cushion and make the entire thing nearly invisible.
+<img width="2304" height="4096" alt="IMG_20261024_135323118" src="https://github.com/user-attachments/assets/9386a0f1-75c8-461e-8678-41764c8447ed" />
+<img width="4096" height="2304" alt="IMG_20261024_135351136" src="https://github.com/user-attachments/assets/92633e44-a144-41f2-90b8-2fac8ad89e7a" />
+<img width="4096" height="2304" alt="IMG_20261024_135403806" src="https://github.com/user-attachments/assets/c1362633-9370-4220-8ae7-8c75380cea90" />
+
+
 From here, plug in the USB cable with the right angle side into the arduino, then make a little loop so it doesn't get in the way as much, then insert it into the built in cable loop and into the frame's usb port. You can use a velcro cable tie to make it even tidier if you like.
 
 ## Firmware (ESP32)
-[facts — check and keep]
 1. Install the **Arduino IDE** and the **Arduino ESP32 boards** package (tested with core 2.0.18).
 2. Install **FastLED 3.9.20**. Newer FastLED versions leave the strip stuck white on this core.
 3. **Tools → Board:** Arduino Nano ESP32. **Tools → Pin Numbering:** "By GPIO number (legacy)".
@@ -148,10 +160,8 @@ From here, plug in the USB cable with the right angle side into the arduino, the
 6. Upload. The board LED blinks while joining Wi-Fi and goes dark once connected. With USB connected to a
    PC, the Serial Monitor (115200) shows the IP address and the refresh rate.
 - The simpler 8-bit sketch `firmware/oal_led_udp/` is a fallback (use `UdpProtocol = adalight`).
-- <!-- TODO: tip: give the board a DHCP reservation on your router. -->
 
 ## Software (on the headset)
-[facts — mostly from linux/README.md; trim or link as you like]
 ### Requirements
 - Steam Frame with SteamOS and SteamVR. Desktop Mode / Konsole access, or SSH.
 - The LED board on the same Wi-Fi network.
@@ -205,10 +215,9 @@ The .ini that's included should be good if you used the same LEDs and LED count 
    by one cell avoids a reddish colour fringe right at the lens edge.
 4. **White balance:** run `oalctl calibrate` next to `contrib/calibrate.html` on a phone or monitor and
    adjust `LedWhite*`.
-5. **Brightness / saturation / smoothing** to taste. <!-- TODO: your settings as a starting point -->
+5. **Brightness / saturation / smoothing** to taste.
 
 ## Troubleshooting
-<!-- Real problems from this build, worth keeping. Add your own. -->
 | Symptom | Fix |
 | --- | --- |
 | Strip stays solid white | Use FastLED 3.9.20, and set Pin Numbering to "By GPIO number (legacy)" |
@@ -223,7 +232,6 @@ The .ini that's included should be good if you used the same LEDs and LED count 
 | `oalctl: command not found` | Add `~/.local/bin` to PATH (see Install) |
 
 ## Uninstalling / going back
-[facts]
 - `oalctl disable` turns the capture layer off; your settings are kept.
 - `sh uninstall.sh` removes everything (`--purge` also removes settings and the learned edge).
 - If anything goes wrong after enabling, the layer turns itself off after 3 minutes without
@@ -232,12 +240,10 @@ The .ini that's included should be good if you used the same LEDs and LED count 
 - Nothing under `/opt/steamvr` or the OS is modified; everything lives in your home directory.
 
 ## Building from source
-[facts] See `linux/README.md` → "Building from source": zig cross-compile (`sh linux/build.sh`) and the
+See `linux/README.md` → "Building from source": zig cross-compile (`sh linux/build.sh`) and the
 Vulkan headers. It targets glibc 2.28+, with the C++ runtime built in.
-<!-- TODO: mention the host test harness if you want contributors. -->
 
 ## Repository layout
-<!-- Adjust to your final structure. -->
 ```
 linux/
   layer/        Vulkan capture layer (runs inside SteamVR's compositor)
@@ -252,7 +258,6 @@ docs/           <!-- TODO: photos used in this README -->
 ```
 
 ## Credits and licenses
-[facts — keep all of these]
 - **OpenVR Ambient Light** by Rectus (MIT): LED geometry, colour pipeline, Adalight protocol and settings.
 - **FrameColor** by beko-kerbecotton (MIT): the idea of a Vulkan layer in SteamVR's compositor, enabled
   through a SteamVR service drop-in, and the startup guard. No FrameColor code is required.
