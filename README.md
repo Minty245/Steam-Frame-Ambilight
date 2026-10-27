@@ -1,23 +1,21 @@
-<!--
-  README outline for the Steam Frame ambient light mod.
-  Sections marked TODO are for you to write. Bracketed notes like [facts] are things I already know
-  from the build and filled in or pointed to; check them against your final hardware.
-  Delete these comments as you go.
--->
+# Steam Frame Ambilight
 
-# Steam Frame Ambilight <!-- TODO: pick a name -->
-
-<!-- TODO: one-sentence pitch, e.g. "LEDs inside the Steam Frame that extend the edges of the picture into
-your peripheral vision, so the field of view feels wider." -->
+LEDs inside the Steam Frame that extend the edges of the picture into
+your peripheral vision, so the field of view feels wider.
 
 <!-- TODO: hero photo or short GIF: headset on a table with the LEDs lit, plus one through-the-lens shot
 if you can get it. GitHub plays .gif and .mp4 inline. -->
 
-> **Status:** <!-- TODO: e.g. "Working daily driver on my Steam Frame (SteamOS x.y, SteamVR x.y). Expect rough edges." -->
-> **Tested on:** Steam Frame, Arduino Nano ESP32, 24 × WS2812B 0807 LEDs. <!-- TODO: versions -->
+> **Status:** Just Works:tm: on my Steam Frame. No daily tinkering required once you get the config how you like it.
+
+> **Tested on:** Steam Frame, Arduino Nano ESP32, 24 × WS2812B 0807 LEDs.
+
+> **AI Disclaimer:** AI was used to develop this software, converted from the human-made OpenVR Ambient Light software to C++ and on the Vulkan runtime. I've done my best to review the code, but I don't have much experience with C++. Please open an issue immediately if you notice any vulnerabilities and I'll do my best to fix them ASAP.
+Pull requests are also welcome.
+
+Hardware setup and the diffuser are completely developed by human hands.
 
 ## Table of contents
-<!-- GitHub also auto-generates one (the ☰ icon on the README), but a short manual list helps on mobile. -->
 1. [What it does](#what-it-does)
 2. [How it works](#how-it-works)
 3. [Safety and disclaimers](#safety-and-disclaimers)
@@ -36,17 +34,22 @@ if you can get it. GitHub plays .gif and .mp4 inline. -->
 ---
 
 ## What it does
-<!-- TODO: 3–5 bullets in your own words. Ideas from the build: -->
 - Lights up the edges of your peripheral vision with colours taken from the very edge of what's on screen.
 - Runs entirely on the headset: no PC software, works standalone and with Steam Link streaming.
 - Follows the headset's display brightness automatically.
 - Smooth, flicker-free dim colours (16-bit colour with temporal dithering) and colour correction for the LEDs.
-- <!-- TODO: anything else you care about (latency feel, games you've tried, comfort) -->
+- Low software power consumption, no detectable increased power usage in Steam Frame performance monitor at 144Hz.
 
-<!-- TODO (optional): "Why I built this" paragraph and a nod to VR_Ambilight as the inspiration. -->
+## Why I made this
+Since modern VR has come about 10 years ago, I've always felt that FOV is king for immersion, no matter the resolution. But no matter what, VR seems to be stuck at the 90-110 degree mark for FOV which just isn't quite enough and I always feel like I'm looking through a tube.
+We're even moving backwards in some ways, with the new Meta VR glasses having an absolutely abhorrent *70 degree fov*. What the actual heck?
+I find that the Steam Frame is right at that point where I can forget about FOV, but I just needed a tiny bit more. It's worse because I have to use prescription lenses as well, and those reduce the FOV back to the point where at times I feel like I'm back inside the tube.
+I decided to take inspiration from others that have done a similar mod like this and apply it to the Steam Frame and enhance it as best I can with the tools I have.
+This won't replace a true extension of FOV, but I find it finally lets me completely forget about the tube and lets me feel finally immersed in VR. 
+
+I encourage everyone to give this a try. It's a total of about $50 of materials for just a massive upgrade in immersion.
 
 ## How it works
-<!-- Short overview for the curious; link to linux/README.md for details. Suggested diagram: -->
 ```
 SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi (UDP) ──► ESP32 ──► LEDs
 (on the headset)       (Vulkan layer)     (colours,       (same network)  (dithering,
@@ -64,8 +67,6 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
   powers the board.
 
 ## Safety and disclaimers
-<!-- TODO: write in your own voice. Points worth covering: -->
-- Opening or modifying the headset may void your warranty; done at your own risk.
 - **Heat:** LEDs and the board sit close to your face. Mention the current limit (`MAX_MILLIAMPS`), your
   diffuser and brightness choices, and how warm it gets in practice. <!-- TODO: your measurements -->
 - **Power:** the LEDs run on 5 V straight from the Frame's USB port, through the board's VBUS pin. The
@@ -75,35 +76,36 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
 - Not affiliated with Valve.
 
 ## Bill of materials
-<!-- Fill in links, prices, quantities. Keep one table; group by category. -->
-| Part | Qty | Notes | Link |
+| Part | Qty/Size | Notes | Link |
 | --- | --- | --- | --- |
-| Arduino Nano ESP32 (ESP32-S3) | 1 | Any ESP32-S3 should work; this guide uses the Nano's pin names | <!-- TODO --> |
-| WS2812B 0807 addressable LEDs | 24 | 12 per side. <!-- TODO: kit name --> | <!-- TODO: amazon.com/dp/B0DWX8BPGY --> |
-| Thin wire | <!-- TODO --> | <!-- TODO: gauge, colours --> | |
-| USB-C cable / adapter | 1 | Powers the board from the Frame's USB port <!-- TODO: what you used (right-angle? length?) --> | |
-| Light-reducing tape | <!-- TODO --> | Cuts brightness before diffusing | |
-| Fabric tape | <!-- TODO --> | Diffuser layer(s) | |
+| Arduino Nano ESP32 (ESP32-S3) | 1 | Any ESP32-S3 should work; this guide uses the Nano's pin names | https://www.amazon.com/dp/B0C947C9QS |
+| WS2812B 0807 addressable LEDs | 24 | 12 per side. | https://www.amazon.com/dp/B0DWX8BPGY |
+| Thin wire | 22awg | I recommend getting 3 strand wire, the kind that's attached in a flat line. | |
+| USB-C cable / adapter | 1, 1.5ft | Powers the board from the Frame's USB port, right angle, 1.5 feet | https://www.amazon.com/dp/B0H5QJFQR1 |
+| Light-reducing tape |  | Cuts brightness before diffusing | https://www.amazon.com/dp/B0CPVRS29P |
+| Thin Velcro |  | Diffuser layer(s), also used to attach diffusers | https://www.amazon.com/dp/B0013AIAQ2 |
 | 3D-printed parts | see below | | |
-| <!-- TODO: glue/adhesive, heat-shrink, Kapton, screws, magnets... --> | | | |
+| Heat Shrink | | Any standard heat shrink works. To cover up the wires and make it look sleek. | |
+| Thick Transparent Double-sided Tape | | Any brand works. As long as it's like Alien Tape. | https://www.amazon.com/dp/B09H2RXXD9/ |
+| USB-C hub | | To allow you to charge the frame while still having the arduino plugged in| https://www.amazon.com/dp/B0DC51W9YC |
 
 **Tools:** <!-- TODO: soldering iron, flush cutters, 3D printer, multimeter (recommended)... -->
+Pinecil soldering iron
+Flush cutters
+3D Printer, I used a P1S
+Scissors to cut the tape
+Wire stripper
+X-Acto Knife
 
 ## 3D-printed parts
-<!-- TODO: one row per part. Put STL/STEP/3MF files in a `hardware/` folder and link them. -->
-| Part | File | Material | Settings | Notes |
+| Part | File | Material | Notes |
 | --- | --- | --- | --- | --- |
-| <!-- TODO: diffuser --> | `hardware/....stl` | <!-- e.g. PETG; translucent? --> | <!-- layer height, infill, supports --> | <!-- heat notes --> |
-| <!-- TODO: mounts/brackets --> | | | | |
-
-<!-- TODO: note any print-orientation tips, and whether parts are remixable (link the CAD source if you share it). -->
+| Low profile arduino case | https://www.printables.com/model/1009486-enclosure-for-arduino-nano-esp32 | PLA, black to match the Frame | |
+| Diffuser | https://www.printables.com/model/1884448-steam-frame-ambilight-diffuser | Transparent PETG | |
 
 ## Hardware build
-<!-- TODO: your words + photos at every step. Suggested structure: -->
 ### 1. Plan the LED layout
 - 24 LEDs: 12 down each side of the lenses. <!-- TODO: exact placement, photo -->
-- Which end of each strip is the data input, and which LED is LED 0 (this decides the `BottomToTop*` /
-  `SwapLeftRight` settings later).
 
 ### 2. Wiring
 <!-- TODO: wiring diagram image (Fritzing, KiCad, or a clear hand drawing). -->
@@ -112,16 +114,28 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
 | D6 (GPIO9) | DIN of first LED | Data |
 | VBUS (5 V from USB) | 5V/VDD | Current capped by `MAX_MILLIAMPS` in the firmware |
 | GND | GND | |
-<!-- TODO: how the two sides are chained (left then right?), wire routing, strain relief. -->
+I recommend about __ cm of wire between the arduino and the first LED strip, and then __ of wire between the first led strip and the second. Put heat shrink where you think it fits, but don't cover too much of the actual LED strip. These wires are tiny, so there's no risk of electric shock or anything. And they won't move much once actually mounted.
+But I do recommend putting some heat shrink where the wire from the arduino and the first led strip connect for some strain relief. That has broken off before for me due to the many adjustments I was doing. And those LEDs don't matter quite as much as the others anyways.
 
 ### 3. Mounting inside the headset
 <!-- TODO: step-by-step with photos: removing the facial interface (?), attaching mounts, gluing strips. -->
+Remove the adhesive strip for the LEDs and mount them roughly level with the lens. The lower half should tape right on, but you'll want to use the top LED adhesive part to mount to the top. It's a bit janky, but I haven't thought of a better solution currently.
+The wire can be threaded under the face gasket as well, and be hidden almost completely. I don't feel the extra pressure from the wire myself either. It's completely hidden!
+While you're in here, cut a small bit of the hook part of the velcro and attach it to the top of the speaker housing area. Give it a bit of a triangle shape so you have some adjustment to work with on the diffuser.
 
 ### 4. Diffuser
 <!-- TODO: your tape stack / printed diffuser, and how each changes brightness/heat. -->
+Preparing the diffuser is a bit tricky. You'll want to put the full width of the tape and cover as much of the bottom half as possible. I've found laying the diffuser on my leg and placing the tape on top helps a lot.
+First tape you should put on is the dimming tape, then the velcro. Use a precision cutter like an X-Acto Knife to trim the edges.
+Then, put a tiny strip of the felt part of the velcro on the external fin. This is how we'll actually mount it to the headset.
+Place the diffusers onto that little speaker housing area, and make sure the LEDs are covered. You'll likely have to adjust them a bit more in the future as the light can shine out from underneaht them a tad.
 
 ### 5. Mounting the board
-<!-- TODO: where the Nano lives, cable routing to the Frame's USB port. -->
+Ideally print a housing for the Arduino, and make sure the wire is held down in some way as well. You can just slap some Alien tape on the back and put it on the side of the headset onto the face gasket section. This will let you still take out the core module without fussing with the whole setup if needed.
+
+### 6. Making it tidy
+If you put on the heat shrink where it should be and your wires are sized right, you should just be able to tuck the wires under the face cushion and make the entire thing nearly invisible.
+From here, plug in the USB cable with the right angle side into the arduino, then make a little loop so it doesn't get in the way as much, then insert it into the built in cable loop and into the frame's usb port. You can use a velcro cable tie to make it even tidier if you like.
 
 ## Firmware (ESP32)
 [facts — check and keep]
@@ -156,6 +170,7 @@ oalctl confirm                   # once the headset looks normal; otherwise it r
 instead of committing dist/ to the repo). -->
 
 ### Configure
+
 Edit `~/.config/oal-frame/oal.ini` (changes apply when you save). The minimum:
 ```ini
 Output = udp
@@ -180,7 +195,7 @@ contrib/oal.ini for the rest. -->
 | `oalctl disable` / `enable` | Turn the capture layer off / on |
 
 ## Calibration and tuning
-<!-- TODO: your own walk-through. Suggested order: -->
+The .ini that's included should be good if you used the same LEDs and LED count as I have. Details below if you have a different setup.
 1. **LED order:** put something bright at the top of the view and on each side. Fix `SwapLeftRight` /
    `BottomToTopLeft` / `BottomToTopRight` until the LEDs match.
 2. **Lens edge:** look around a bright game or SteamVR Home for a few seconds, then run `oalctl snapshot`.
@@ -206,7 +221,6 @@ contrib/oal.ini for the rest. -->
 | Purple/red fringe on top and bottom LEDs | Lens colour-fringe correction at the very edge; `EdgeInset = 0.0075` |
 | Brief blackouts | Loose wiring, or an old daemon version (update) |
 | `oalctl: command not found` | Add `~/.local/bin` to PATH (see Install) |
-| SteamVR asks for first-time setup after restarts | <!-- TODO: in your case this was FrameColor, not this mod --> |
 
 ## Uninstalling / going back
 [facts]
