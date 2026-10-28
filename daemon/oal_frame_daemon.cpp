@@ -39,7 +39,7 @@
 #include <unistd.h>
 
 #include "../common/oal_shm.h"
-#include "../../mathutil.h" // OpenVR Ambient Light's CIELAB helpers (repo root)
+#include "../third_party/oal/mathutil.h" // OpenVR Ambient Light's CIELAB helpers (MIT, Rectus)
 #include "../third_party/openvr/openvr.h" // only for types/interfaces; the library is loaded at runtime
 
 #include <dlfcn.h>
@@ -181,6 +181,14 @@ bool LoadSettings(const std::string& path, Settings& s, std::string* err)
     {
         line = Trim(line);
         if (line.empty() || line[0] == ';' || line[0] == '#' || line[0] == '[') continue;
+        // Comments after a value ("UdpHost = 1.2.3.4   ; the board") are allowed: a ';' or '#'
+        // that follows whitespace starts a comment.
+        for (size_t i = 1; i < line.size(); i++)
+            if ((line[i] == ';' || line[i] == '#') && (line[i - 1] == ' ' || line[i - 1] == '\t'))
+            {
+                line = Trim(line.substr(0, i));
+                break;
+            }
         size_t eq = line.find('=');
         if (eq == std::string::npos) continue;
         kv[Lower(Trim(line.substr(0, eq)))] = Trim(line.substr(eq + 1));
@@ -1541,6 +1549,23 @@ int SelfTest()
         RGBf bright = ApplyFloor({0.5f, 0.2f, 0.1f}, {0.5f, 0.2f, 0.1f}, fs);
         check(std::fabs(dim.b - 0.02) < 1e-6 && std::fabs(dim.r - 0.01) < 1e-6 && black.b < 0.002 && bright.r == 0.5f,
               "brightness floor lifts dim colours (same hue), leaves black off and bright colours alone");
+    }
+    {
+        // oal.ini: comments after values must not end up in the value.
+        char path[] = "/tmp/oal-selftest-XXXXXX";
+        int fd = mkstemp(path);
+        if (fd >= 0)
+        {
+            const char* ini = "[UDP]\nUdpHost = oal-led.local      ; or the board's IP\nUdpProtocol = oal16 # comment\n"
+                              "Output = udp\t; wifi\nNumLights = 24 ; both sides\n";
+            ssize_t wr = write(fd, ini, strlen(ini));
+            close(fd);
+            Settings t;
+            bool ok = wr > 0 && LoadSettings(path, t, nullptr);
+            unlink(path);
+            check(ok && t.UdpHost == "oal-led.local" && t.UdpProtocol == "oal16" && t.Output == "udp" && t.NumLights == 24,
+                  "oal.ini comments after a value are ignored");
+        }
     }
     printf("%s\n", fails ? "SELFTEST FAILED" : "selftest passed");
     return fails ? 1 : 0;
