@@ -79,7 +79,7 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
 | --- | --- | --- | --- |
 | Arduino Nano ESP32 (ESP32-S3) | 1 | Any ESP32-S3 should work; this guide uses the Nano's pin names | https://www.amazon.com/dp/B0C947C9QS |
 | WS2812B 0807 addressable LEDs | 24 | 12 per side. | https://www.amazon.com/dp/B0DWX8BPGY |
-| Thin wire | 22awg | I recommend getting 3 strand wire, the kind that's attached in a flat line. | |
+| Thin wire | 22awg | I recommend getting 3 strand wire, the kind that's attached in a flat line. 22awg is easier to work with imo, but you can go smaller if you like.| |
 | USB-C cable / adapter | 1, 1.5ft | Powers the board from the Frame's USB port, right angle, 1.5 feet | https://www.amazon.com/dp/B0H5QJFQR1 |
 | Light-reducing tape |  | Cuts brightness before diffusing | https://www.amazon.com/dp/B0CPVRS29P |
 | Thin Velcro |  | Diffuser layer(s), also used to attach diffusers | https://www.amazon.com/dp/B0013AIAQ2 |
@@ -113,7 +113,7 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
 | VBUS (5 V from USB) | 5V/VDD | Current capped by `MAX_MILLIAMPS` in the firmware |
 | GND | GND | |
 
-I recommend about __ cm of wire between the arduino and the first LED strip, and then __ of wire between the first led strip and the second. Put heat shrink where you think it fits, but don't cover too much of the actual LED strip. These wires are tiny, so there's no risk of electric shock or anything. And they won't move much once actually mounted.
+I recommend about 6 cm of wire between the arduino and the first LED strip, and then 12cm of wire between the first led strip and the second. Put heat shrink where you think it fits, but don't cover too much of the actual LED strip. These wires are tiny, so there's no risk of electric shock or anything. And they won't move much once actually mounted.
 But I do recommend putting some heat shrink where the wire from the arduino and the first led strip connect for some strain relief. That has broken off before for me due to the many adjustments I was doing. And those LEDs don't matter quite as much as the others anyways.
 
 ### 3. Mounting inside the headset
@@ -321,7 +321,6 @@ Vulkan headers. It targets glibc 2.28+, with the C++ runtime built in.
 
 ## Repository layout
 ```
-linux/
   layer/        Vulkan capture layer (runs inside SteamVR's compositor)
   daemon/       LED daemon (colours, brightness, colour correction, UDP output)
   common/       Shared-memory format between the two
@@ -329,8 +328,7 @@ linux/
   firmware/     ESP32 sketches (dithering and plain 8-bit)
   third_party/  OpenVR header (BSD-3)
   test/         Host test harness
-hardware/       <!-- TODO: STL/3MF/STEP files, wiring diagram -->
-docs/           <!-- TODO: photos used in this README -->
+  docs/         Extra software details
 ```
 
 ## Credits and licenses
