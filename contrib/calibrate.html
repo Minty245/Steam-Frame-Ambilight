@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OAL LED calibration</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #000; font: 16px/1.4 system-ui, sans-serif; color: #fff; }
+  #swatch { position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center; cursor: pointer;
+            user-select: none; -webkit-user-select: none; }
+  #label { margin: 0 16px 24px; padding: 8px 14px; border-radius: 8px; background: rgba(0,0,0,.55);
+           color: #fff; text-align: center; max-width: 36em; }
+  #label small { display: block; opacity: .8; }
+</style>
+</head>
+<body>
+<div id="swatch"><div id="label"></div></div>
+<script>
+// Same order as `oalctl calibrate` (oal-frame-daemon --calibrate).
+const steps = [
+  ["White", "#ffffff"], ["Grey 50%", "#808080"], ["Dark grey", "#404040"], ["Very dark grey", "#202020"],
+  ["Red", "#ff0000"], ["Green", "#00ff00"], ["Blue", "#0000ff"], ["Yellow", "#ffff00"],
+  ["Cyan", "#00ffff"], ["Magenta", "#ff00ff"], ["Orange", "#ff8000"],
+  ["Slow fade, 0-3% white", "fade"],
+];
+let i = 0, t0 = performance.now(), raf = 0;
+const sw = document.getElementById("swatch"), label = document.getElementById("label");
+function lin2srgb(v) { return v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; }
+function fade() {
+  const ph = ((performance.now() - t0) / 8000) % 1;
+  const v = 0.03 * (ph < 0.5 ? ph * 2 : (1 - ph) * 2);
+  const c = Math.round(lin2srgb(v) * 255);
+  sw.style.background = `rgb(${c},${c},${c})`;
+  raf = requestAnimationFrame(fade);
+}
+function show() {
+  cancelAnimationFrame(raf);
+  const [name, hex] = steps[i];
+  t0 = performance.now();
+  if (hex === "fade") fade(); else sw.style.background = hex;
+  label.innerHTML = `${i + 1}/${steps.length}: ${name}${hex === "fade" ? "" : " " + hex}` +
+    `<small>Tap or press Space for next, Backspace for previous. Match the step number in the terminal.</small>`;
+}
+sw.addEventListener("click", () => { i = (i + 1) % steps.length; show(); });
+addEventListener("keydown", e => {
+  if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") { i = (i + 1) % steps.length; show(); e.preventDefault(); }
+  if (e.key === "Backspace" || e.key === "ArrowLeft") { i = (i + steps.length - 1) % steps.length; show(); e.preventDefault(); }
+});
+show();
+</script>
+</body>
+</html>

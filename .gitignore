@@ -1,0 +1,5 @@
+# Wi-Fi credentials for the LED firmware
+firmware/oal_led_udp/wifi_secrets.h
+firmware/oal_led_udp_dither/wifi_secrets.h
+dist/oal-frame-aarch64.tar.gz
+dist/oal-frame-aarch64.tar.gz.sha256

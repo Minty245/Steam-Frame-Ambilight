@@ -1,0 +1,7 @@
+{
+  global:
+    oal_GetInstanceProcAddr;
+    oal_GetDeviceProcAddr;
+  local:
+    *;
+};
