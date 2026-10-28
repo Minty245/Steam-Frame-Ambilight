@@ -3,7 +3,7 @@
 LEDs inside the Steam Frame that extend the edges of the picture into
 your peripheral vision, so the field of view feels wider.
 
-<img width="4096" height="2304" alt="IMG_20261024_135113668" src="https://github.com/user-attachments/assets/57db1938-742a-46af-a307-8acc679b6103" />
+<img width="400" alt="IMG_20261024_135113668" src="https://github.com/user-attachments/assets/57db1938-742a-46af-a307-8acc679b6103" />
 
 **Status:** Just Works:tm: on my Steam Frame. No daily tinkering required once you get the config how you like it.
 
@@ -17,6 +17,7 @@ Hardware setup and the diffuser are completely developed by human hands.
 
 ## Table of contents
 1. [What it does](#what-it-does)
+2. [Why I made this](#why-i-made-this)
 2. [How it works](#how-it-works)
 3. [Safety and disclaimers](#safety-and-disclaimers)
 4. [Bill of materials](#bill-of-materials)
@@ -41,7 +42,7 @@ Hardware setup and the diffuser are completely developed by human hands.
 - Low software power consumption, no detectable increased power usage in Steam Frame performance monitor at 144Hz.
 
 ## Why I made this
-Since modern VR has come about 10 years ago, I've always felt that FOV is king for immersion, no matter the resolution. But no matter what, VR seems to be stuck at the 90-110 degree mark for FOV which just isn't quite enough and I always feel like I'm looking through a tube.
+Since modern VR has came about 10 years ago, I've always felt that FOV is king for immersion, no matter the resolution. But no matter what, VR seems to be stuck at the 90-110 degree mark for FOV which just isn't quite enough and I always feel like I'm looking through a tube.
 We're even moving backwards in some ways, with the new Meta VR glasses having an absolutely abhorrent *70 degree fov*. What the actual heck?
 I find that the Steam Frame is right at that point where I can forget about FOV, but I just needed a tiny bit more. It's worse because I have to use prescription lenses as well, and those reduce the FOV back to the point where at times I feel like I'm back inside the tube.
 I decided to take inspiration from others that have done a similar mod like this and apply it to the Steam Frame and enhance it as best I can with the tools I have.
@@ -70,8 +71,7 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
 - **Heat:** The LEDs are very close to your face and need to run bright enough to get through the diffuser stack. After a while you can feel the heat a tad, but in my experience it doesn't make you sweat or anything.
 - **Power:** the LEDs run on 5 V straight from the Frame's USB port, through the board's VBUS pin. The
   firmware caps the strip's current (`MAX_MILLIAMPS`, 500 mA by default).
-- **Brightness and flicker:** bright light close to the eyes; photosensitivity warning; how to turn it off
-  quickly (`oalctl disable`, or just unplug the board).
+- **Brightness and flicker:** The LEDs are close to your eyes, if put at max brightness even with a diffuser it can be quite bright. If you run the LEDs too dim with dithering there is also major flickering as well, standard photosensitivity warnings apply.
 - Not affiliated with Valve.
 
 ## Bill of materials
@@ -98,7 +98,7 @@ SteamVR compositor ──► capture layer ──► LED daemon ──► Wi-Fi 
 
 ## 3D-printed parts
 | Part | File | Material | Notes |
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 | Low profile arduino case | https://www.printables.com/model/1009486-enclosure-for-arduino-nano-esp32 | PLA, black to match the Frame | |
 | Diffuser | https://www.printables.com/model/1884448-steam-frame-ambilight-diffuser | Transparent PETG | |
 
@@ -119,31 +119,37 @@ But I do recommend putting some heat shrink where the wire from the arduino and 
 ### 3. Mounting inside the headset
 Remove the adhesive strip for the LEDs and mount them roughly level with the lens. The lower half should tape right on, but you'll want to use the top LED adhesive part to mount to the top. It's a bit janky, but I haven't thought of a better solution currently.
 The wire can be threaded under the face gasket as well, and be hidden almost completely. I don't feel the extra pressure from the wire myself either. It's completely hidden!
-<img width="4096" height="2304" alt="IMG_20261024_135438375" src="https://github.com/user-attachments/assets/bf596287-4800-4304-88e4-6a4203e18f93" />
+
+<img width="400" alt="IMG_20261024_135438375" src="https://github.com/user-attachments/assets/bf596287-4800-4304-88e4-6a4203e18f93" />
 
 While you're in here, cut a small bit of the hook part of the velcro and attach it to the top of the speaker housing area. Give it a bit of a triangle shape so you have some adjustment to work with on the diffuser.
-<img width="4096" height="2304" alt="IMG_20261024_135750661" src="https://github.com/user-attachments/assets/eb37defb-da77-4230-9665-bfb57d370b14" />
+
+<img width="400" alt="IMG_20261024_135750661" src="https://github.com/user-attachments/assets/eb37defb-da77-4230-9665-bfb57d370b14" />
 
 
 ### 4. Diffuser
-Preparing the diffuser is a bit tricky. You'll want to put the full width of the tape and cover as much of the bottom half as possible. I've found laying the diffuser on my leg and placing the tape on top helps a lot.<img width="2304" height="4096" alt="IMG_20261024_135147109" src="https://github.com/user-attachments/assets/c2de2b86-ab6a-4900-8477-4994c7bdba32" />
+Preparing the diffuser is a bit tricky. You'll want to put the full width of the tape and cover as much of the bottom half as possible. I've found laying the diffuser on my leg and placing the tape on top helps a lot.
 
-<img width="2304" height="4096" alt="IMG_20261024_135156830" src="https://github.com/user-attachments/assets/d53f4d93-6765-4c2f-8868-66ee6fb797f5" />
+<img width="200" alt="IMG_20261024_135147109" src="https://github.com/user-attachments/assets/c2de2b86-ab6a-4900-8477-4994c7bdba32" />
+
+<img width="200" alt="IMG_20261024_135156830" src="https://github.com/user-attachments/assets/d53f4d93-6765-4c2f-8868-66ee6fb797f5" />
 
 First tape you should put on is the dimming tape, then the velcro. Use a precision cutter like an X-Acto Knife to trim the edges.
 Then, put a tiny strip of the felt part of the velcro on the external fin. This is how we'll actually mount it to the headset.
-Place the diffusers onto that little speaker housing area, and make sure the LEDs are covered. You'll likely have to adjust them a bit more in the future as the light can shine out from underneaht them a tad.
+Place the diffusers onto that little speaker housing area, and make sure the LEDs are covered. You'll likely have to adjust them a bit more in the future as the light can shine out from underneath them a tad.
 
 ### 5. Mounting the board
 Ideally print a housing for the Arduino, and make sure the wire is held down in some way as well. You can just slap some Alien tape on the back and put it on the side of the headset onto the face gasket section. This will let you still take out the core module without fussing with the whole setup if needed.
-<img width="2304" height="4096" alt="IMG_20261024_135306968" src="https://github.com/user-attachments/assets/a6d86df0-20e1-47c6-b354-002426da1fac" />
+
+<img width="200" alt="IMG_20261024_135306968" src="https://github.com/user-attachments/assets/a6d86df0-20e1-47c6-b354-002426da1fac" />
 
 
 ### 6. Making it tidy
 If you put on the heat shrink where it should be and your wires are sized right, you should just be able to tuck the wires under the face cushion and make the entire thing nearly invisible.
-<img width="2304" height="4096" alt="IMG_20261024_135323118" src="https://github.com/user-attachments/assets/9386a0f1-75c8-461e-8678-41764c8447ed" />
-<img width="4096" height="2304" alt="IMG_20261024_135351136" src="https://github.com/user-attachments/assets/92633e44-a144-41f2-90b8-2fac8ad89e7a" />
-<img width="4096" height="2304" alt="IMG_20261024_135403806" src="https://github.com/user-attachments/assets/c1362633-9370-4220-8ae7-8c75380cea90" />
+
+<img width="200" alt="IMG_20261024_135323118" src="https://github.com/user-attachments/assets/9386a0f1-75c8-461e-8678-41764c8447ed" />
+<img width="400" alt="IMG_20261024_135351136" src="https://github.com/user-attachments/assets/92633e44-a144-41f2-90b8-2fac8ad89e7a" />
+<img width="400" alt="IMG_20261024_135403806" src="https://github.com/user-attachments/assets/c1362633-9370-4220-8ae7-8c75380cea90" />
 
 
 From here, plug in the USB cable with the right angle side into the arduino, then make a little loop so it doesn't get in the way as much, then insert it into the built in cable loop and into the frame's usb port. You can use a velcro cable tie to make it even tidier if you like.
@@ -165,6 +171,9 @@ From here, plug in the USB cable with the right angle side into the arduino, the
 - The LED board on the same Wi-Fi network.
 
 ### Install
+
+Download oal-frame-aarch64.tar.gz from the Releases page and copy it to the Frame
+
 ```sh
 tar -xzf oal-frame-aarch64.tar.gz
 cd oal-frame
@@ -185,20 +194,6 @@ UdpProtocol = oal16          ; needs the dithering firmware
 NumLights = 24
 EyeRotation = 180            ; the Frame's panel image is upside down per eye
 ```
-<!-- TODO: a short table of the settings people will actually touch: Brightness, Saturation, Smoothing,
-EdgeDepth/EdgeInset, SwapLeftRight/BottomToTop*, FollowPanelBrightness, LedWhite*, Dither. Link
-contrib/oal.ini for the rest. -->
-
-### Commands
-| Command | What it does |
-| --- | --- |
-| `oalctl status` | Capture state, view layout, live LED colours |
-| `oalctl snapshot` | Writes `~/oal-snapshot.ppm` showing what each LED samples |
-| `oalctl calibrate` | Test colours on the LEDs, for white balance (with `contrib/calibrate.html`) |
-| `oalctl reset-edge` | Forget the learned lens edge |
-| `oalctl log` | Layer log and daemon journal |
-| `oalctl doctor` | Preflight checks (network, files) |
-| `oalctl disable` / `enable` | Turn the capture layer off / on |
 
 ## Calibration and tuning
 The .ini that's included should be good if you used the same LEDs and LED count as I have. Details below if you have a different setup.
@@ -213,6 +208,90 @@ The .ini that's included should be good if you used the same LEDs and LED count 
    adjust `LedWhite*`.
 5. **Brightness / saturation / smoothing** to taste.
 
+#### Settings reference
+Defaults are the values in the included `contrib/oal.ini`. Section names in `oal.ini` don't matter;
+each setting works wherever it is in the file.
+
+**Connection**
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `Output` | `udp` | `udp` sends colours over Wi-Fi (the Frame has no USB-serial driver). `serial` is for other Linux machines. |
+| `UdpHost` | `oal-led.local` | The board's name or IP address. Use the IP if `.local` names don't resolve. |
+| `UdpPort` | `21324` | Must match `UDP_PORT` in the sketch. |
+| `UdpProtocol` | `oal16` | `oal16` = 16-bit colour with dithering and LED colour correction (needs `oal_led_udp_dither`). `adalight` = plain 8-bit (`oal_led_udp`). `drgb` = WLED. |
+
+**LED layout**
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `NumLights` | `24` | Total LEDs, both sides together. Must match `NUM_LEDS` in the sketch. |
+| `SwapLeftRight` | `true` | Swaps which side of the strip gets the left eye's colours. |
+| `BottomToTopLeft` / `BottomToTopRight` | `false` / `true` | Flips the LED order on that side, for strips wired bottom-to-top. |
+| `EyeRotation` | `180` | The Frame's panel image is upside down and mirrored per eye; 180 turns it upright before sampling. Use `0` on other headsets. |
+
+**Where each LED samples**
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `SampleMode` | `edge` | `edge` samples a thin strip just inside the learned lens edge, level with each LED. `box` uses OAL's original rectangular areas. |
+| `EdgeInset` | `0.0075` | How far in from the lens edge the strip starts, as a fraction of an eye's width (one cell is about 0.0075). One cell in skips the reddish colour fringe right at the edge. |
+| `EdgeDepth` | `0.03` | How thick the sampled strip is. Thicker = calmer on busy edges; thinner = more true to the very edge. |
+| `HeightFraction` | `0.85` | How much of the image height the LEDs on each side cover, split evenly between them. Raise it to spread the LEDs toward the top and bottom of the view. |
+| `VerticalOffset` | `-0.1` | Moves all sample areas up (positive) or down (negative), as a fraction of image height. |
+| `VerticalAreaSize` | `1` | Height of each LED's sample area relative to its slot. `1` = areas touch, below 1 = gaps, above 1 = overlap for smoother blending between LEDs. |
+| `HorizontalOffset`, `WidthFraction`, `Curvature`, `CurvatureShape` | | Box mode only: horizontal position, width and curve of the sample boxes. |
+
+**Brightness**
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `Brightness` | `1.5` | Overall LED brightness multiplier. |
+| `FollowPanelBrightness` | `true` | Dims the LEDs along with the headset's display brightness. |
+| `PanelBrightnessReference` | `1.0` | The display brightness that counts as "full" for the LEDs. Raise it to make the LEDs dimmer at every display brightness. |
+| `MinBrightness` | `0.01` | Brightness floor: colours that are dark but not black keep at least this much glow (same hue) instead of fading out. `0` = off. |
+| `BlackLevel` | `0.004` | Anything darker than this counts as black and switches off, ignoring `MinBrightness`. Raise it if space or night skies glow when they shouldn't. |
+
+**Colour**
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `Saturation` | `1` | Colour intensity. Above 1 = more vivid, below 1 = more muted. |
+| `Contrast` | `1.0` | Spreads darks and brights apart (above 1) or together (below 1). |
+| `GammaRed` / `GammaGreen` / `GammaBlue` | `1` | Keep at `1` for these LEDs. Higher values lift dim colours and wash everything out toward white. |
+| `MinRed` / `MinGreen` / `MinBlue` | `0.0` | Per-colour threshold: levels below it are treated as off. |
+| `MaxRed` / `MaxGreen` / `MaxBlue` | `1.0` | Per-colour ceiling, a simple way to tint the output. |
+
+**LED colour correction and dithering** (`UdpProtocol = oal16` only)
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `Dither` | `true` | Temporal dithering on the board, for smooth dim colours. If you see flicker at low brightness, dim the LEDs physically (tint/tape) and raise `Brightness` rather than turning this off. |
+| `DitherCutoff` | `0` | Levels below this fraction of one LED brightness step are shown as off. Raise to around `0.5`–`1` if near-black sparkles. |
+| `LedWhiteRed` / `LedWhiteGreen` / `LedWhiteBlue` | `1` / `1` / `1` | White balance, 0–1 per colour. Tune with `oalctl calibrate` until LED white matches a white screen. |
+| `LedGamut` | `1.0` | Converts screen colours to the LEDs' purer red/green/blue so hues match the display. `0` = off. |
+
+**Motion and timing**
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `SampleRate` | `144` | Colour updates sent to the board per second. |
+| `Smoothing` | `0.8` | Blends each update with the previous ones. Higher = calmer but laggier (0 = off, max 0.95). |
+| `IdleTimeoutMs` | `3000` | The LEDs switch off after this long without a new frame (headset asleep, nothing showing). |
+
+**Advanced** (rarely needed)
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `EnableLights` | `true` | `false` keeps the daemon running but sends black. |
+| `ViewMode`, `LeftView`, `RightView` | `auto`, `-1`, `-1` | How each eye is found in the captured image. `auto` is right on the Frame; `oalctl status` shows what it picked. |
+| `InputEncoding` | `auto` | Override (`linear` / `srgb`) only if colours look washed out or too dark compared with the display. |
+| `OpenVRLibrary` | SteamVR's `libopenvr_api.so` | Used only to read the display brightness. |
+| `OAL_CAPTURE_HZ`, `OAL_CAPTURE_GRID` | `30`, `270` | In `~/.config/oal-frame/vulkan.env`, not `oal.ini`: capture rate and capture detail. Restart SteamVR after changing them. |
+
+### Commands
+| Command | What it does |
+| --- | --- |
+| `oalctl status` | Capture state, view layout, live LED colours |
+| `oalctl snapshot` | Writes `~/oal-snapshot.ppm` showing what each LED samples |
+| `oalctl calibrate` | Test colours on the LEDs, for white balance (with `contrib/calibrate.html`) |
+| `oalctl reset-edge` | Forget the learned lens edge |
+| `oalctl log` | Layer log and daemon journal |
+| `oalctl doctor` | Preflight checks (network, files) |
+| `oalctl disable` / `enable` | Turn the capture layer off / on |
+
 ## Troubleshooting
 | Symptom | Fix |
 | --- | --- |
@@ -225,6 +304,7 @@ The .ini that's included should be good if you used the same LEDs and LED count 
 | LEDs dark, only light when moving your head | Edge learned too wide: update and/or `oalctl reset-edge`, relearn in a game (not the room view) |
 | Purple/red fringe on top and bottom LEDs | Lens colour-fringe correction at the very edge; `EdgeInset = 0.0075` |
 | Brief blackouts | Loose wiring, or an old daemon version (update) |
+|Flickering at low brightness | Disable dimming, or add more dimming tape and increase overall brightness|
 | `oalctl: command not found` | Add `~/.local/bin` to PATH (see Install) |
 
 ## Uninstalling / going back
@@ -236,7 +316,7 @@ The .ini that's included should be good if you used the same LEDs and LED count 
 - Nothing under `/opt/steamvr` or the OS is modified; everything lives in your home directory.
 
 ## Building from source
-See `linux/README.md` → "Building from source": zig cross-compile (`sh linux/build.sh`) and the
+See `docs/Software.md` → "Building from source": zig cross-compile (`sh build.sh`) and the
 Vulkan headers. It targets glibc 2.28+, with the C++ runtime built in.
 
 ## Repository layout
@@ -259,6 +339,6 @@ docs/           <!-- TODO: photos used in this README -->
   through a SteamVR service drop-in, and the startup guard. No FrameColor code is required.
 - **JChalka** ([Blended-Frame-Insertion / TemporalBFI](https://github.com/JChalka/Blended-Frame-Insertion)):
   the dithering design and the LED measurements behind the colour correction.
-- **Statonwest/VR_Ambilight**: inspiration for the hardware concept. <!-- TODO: confirm you want this -->
+- **Statonwest/VR_Ambilight**: inspiration for the hardware concept.
 - **OpenVR SDK** header by Valve (BSD-3-Clause), in `third_party/openvr/`.
 - **FastLED** (MIT), used by the firmware.
